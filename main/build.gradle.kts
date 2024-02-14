@@ -6,13 +6,14 @@ import com.android.build.gradle.api.ApplicationVariant
  */
 
 plugins {
-    alias(libs.plugins.android.application)
+//    alias(libs.plugins.android.application)
+    id("com.android.library")
     alias(libs.plugins.kotlin.android)
-    id("checkstyle")
+//    id("checkstyle")
 }
 
 android {
-    buildToolsVersion = "33.0.1"
+//    buildToolsVersion = "33.0.1"
     buildFeatures {
         aidl = true
     }
@@ -27,13 +28,13 @@ android {
         minSdk = 21
         targetSdk = 34
         //targetSdkPreview = "UpsideDownCake"
-        versionCode = 206
-        versionName = "0.7.51"
-        externalNativeBuild {
-            cmake {
-                //arguments+= "-DCMAKE_VERBOSE_MAKEFILE=1"
-            }
-        }
+//        versionCode = 206
+//        versionName = "0.7.51"
+//        externalNativeBuild {
+//            cmake {
+//                //arguments+= "-DCMAKE_VERBOSE_MAKEFILE=1"
+//            }
+//        }
     }
 
 
@@ -122,7 +123,7 @@ android {
         create("ovpn2")
         {
             dimension = "ovpnimpl"
-            versionNameSuffix = "-o2"
+//            versionNameSuffix = "-o2"
             buildConfigField("boolean", "openvpn3", "false")
         }
     }
@@ -163,30 +164,30 @@ android {
         }
     }
 
-    bundle {
-        codeTransparency {
-            signing {
-                val keystoreTPFile: String? by project
-                storeFile = keystoreTPFile?.let { file(it) }
-                val keystoreTPPassword: String? by project
-                storePassword = keystoreTPPassword
-                val keystoreTPAliasPassword: String? by project
-                keyPassword = keystoreTPAliasPassword
-                val keystoreTPAlias: String? by project
-                keyAlias = keystoreTPAlias
-
-                if (keystoreTPFile?.isEmpty() ?: true)
-                    println("keystoreTPFile not set, disabling transparency signing")
-                if (keystoreTPPassword?.isEmpty() ?: true)
-                    println("keystoreTPPassword not set, disabling transparency signing")
-                if (keystoreTPAliasPassword?.isEmpty() ?: true)
-                    println("keystoreTPAliasPassword not set, disabling transparency signing")
-                if (keystoreTPAlias?.isEmpty() ?: true)
-                    println("keyAlias not set, disabling transparency signing")
-
-            }
-        }
-    }
+//    bundle {
+//        codeTransparency {
+//            signing {
+//                val keystoreTPFile: String? by project
+//                storeFile = keystoreTPFile?.let { file(it) }
+//                val keystoreTPPassword: String? by project
+//                storePassword = keystoreTPPassword
+//                val keystoreTPAliasPassword: String? by project
+//                keyPassword = keystoreTPAliasPassword
+//                val keystoreTPAlias: String? by project
+//                keyAlias = keystoreTPAlias
+//
+//                if (keystoreTPFile?.isEmpty() ?: true)
+//                    println("keystoreTPFile not set, disabling transparency signing")
+//                if (keystoreTPPassword?.isEmpty() ?: true)
+//                    println("keystoreTPPassword not set, disabling transparency signing")
+//                if (keystoreTPAliasPassword?.isEmpty() ?: true)
+//                    println("keystoreTPAliasPassword not set, disabling transparency signing")
+//                if (keystoreTPAlias?.isEmpty() ?: true)
+//                    println("keyAlias not set, disabling transparency signing")
+//
+//            }
+//        }
+//    }
 }
 
 var swigcmd = "swig"
@@ -220,14 +221,14 @@ fun registerGenTask(variantName: String, variantDirName: String): File {
     return baseDir
 }
 
-android.applicationVariants.all(object : Action<ApplicationVariant> {
-    override fun execute(variant: ApplicationVariant) {
-        val sourceDir = registerGenTask(variant.name, variant.baseName.replace("-", "/"))
-        val task = tasks.named("generateOpenVPN3Swig${variant.name}").get()
-
-        variant.registerJavaGeneratingTask(task, sourceDir)
-    }
-})
+//android.applicationVariants.all(object : Action<ApplicationVariant> {
+//    override fun execute(variant: ApplicationVariant) {
+//        val sourceDir = registerGenTask(variant.name, variant.baseName.replace("-", "/"))
+//        val task = tasks.named("generateOpenVPN3Swig${variant.name}").get()
+//
+//        variant.registerJavaGeneratingTask(task, sourceDir)
+//    }
+//})
 
 
 dependencies {

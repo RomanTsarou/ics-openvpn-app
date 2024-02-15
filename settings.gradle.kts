@@ -20,6 +20,7 @@ dependencyResolutionManagement {
 }
 
 include(":main")
-include(":tlsexternalcertprovider")
-include(":remoteExample")
+//include(":tlsexternalcertprovider")
+//include(":remoteExample")
 //include(":yubikeyplugin")
+include(":app")

@@ -6,208 +6,110 @@
 package com.openvpn
 
 import android.app.Activity
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
-import android.os.IBinder
-import android.os.RemoteException
 import android.util.Log
-import de.blinkt.openvpn.api.IOpenVPNAPIService
-import de.blinkt.openvpn.api.IOpenVPNStatusCallback
+import de.blinkt.openvpn.LaunchVPN
+import de.blinkt.openvpn.VpnProfile
+import de.blinkt.openvpn.activities.DisconnectVPN
+import de.blinkt.openvpn.core.ConfigParser
+import de.blinkt.openvpn.core.ConnectionStatus
+import de.blinkt.openvpn.core.OpenVPNService
+import de.blinkt.openvpn.core.ProfileManager
+import de.blinkt.openvpn.core.VpnStatus
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import java.io.InputStream
 
 class VpnConnectionWatcher(private val activity: Activity) {
-
-    private var vpnStart: Boolean = false
-    private var mService: IOpenVPNAPIService? = null
+    val stateFlow = MutableStateFlow("")
 
     /**
      * Class for interacting with the main interface of the service.
      */
-    private val mConnection: ServiceConnection = object : ServiceConnection {
-        override fun onServiceConnected(
-            className: ComponentName,
-            service: IBinder
+    private val stateListener = object : VpnStatus.StateListener {
+        override fun updateState(
+            state: String?,
+            logmessage: String?,
+            localizedResId: Int,
+            level: ConnectionStatus,
+            intent: Intent?
         ) {
-            // This is called when the connection with the service has been
-            // established, giving us the service object we can use to
-            // interact with the service.  We are communicating with our
-            // service through an IDL interface, so get a client-side
-            // representation of that from the raw service object.
-            mService = IOpenVPNAPIService.Stub.asInterface(service)
-            try {
-                // Request permission to use the API
-                val i: Intent? = mService!!.prepare(activity.packageName)
-                if (i != null) {
-                    activity.startActivityForResult(i, ICS_OPENVPN_PERMISSION)
-                } else {
-                    onActivityResult(ICS_OPENVPN_PERMISSION, Activity.RESULT_OK, null)
-                }
-            } catch (e: RemoteException) {
-//                logger.log("openvpn service connection failed: " + e.message)
-                e.printStackTrace()
-            }
+//            when (level) {
+//                LEVEL_CONNECTED -> TODO()
+//                LEVEL_VPNPAUSED -> TODO()
+//                LEVEL_CONNECTING_SERVER_REPLIED -> TODO()
+//                LEVEL_CONNECTING_NO_SERVER_REPLY_YET -> TODO()
+//                LEVEL_NONETWORK -> TODO()
+//                LEVEL_NOTCONNECTED -> TODO()
+//                LEVEL_START -> TODO()
+//                LEVEL_AUTH_FAILED -> TODO()
+//                LEVEL_WAITING_FOR_USER_INPUT -> TODO()
+//                UNKNOWN_LEVEL -> TODO()
+//            }
+            Log.i("rom", "updateState: ${listOf(level, state, logmessage, localizedResId)}")
+            Log.v("rom", "updateState localized: ${activity.getString(localizedResId)}")
+            stateFlow.value = level.name.substringAfter("LEVEL_")
         }
 
-        override fun onServiceDisconnected(className: ComponentName) {
-            // This is called when the connection with the service has been
-            // unexpectedly disconnected -- that is, its process crashed.
-            mService = null
+        override fun setConnectedVPN(uuid: String?) {
+            Log.i("rom", "setConnectedVPN: uuid=$uuid")
         }
+
     }
 
+    fun startVpn() {
+        GlobalScope.launch {
+            val profile = ProfileManager.getInstance(activity.applicationContext)
+                .getProfileByName("Japan3")
+                ?: createVpnProfile("Japan3", Serts.Japan3)
 
-    private val mCallback: IOpenVPNStatusCallback = object : IOpenVPNStatusCallback.Stub() {
-        /**
-         * This is called by the remote service regularly to tell us about
-         * new values.  Note that IPC calls are dispatched through a thread
-         * pool running in each process, so the code executing here will
-         * NOT be running in our main thread like most other things -- so,
-         * to update the UI, we need to use a Handler to hop over there.
-         */
-        @Throws(RemoteException::class)
-        override fun newStatus(uuid: String?, state: String?, message: String?, level: String?) {
-            Log.i("rom", "newStatus $level: $state - $message")
-//            val msg = Message.obtain(
-//                mHandler, MainFragment.MSG_UPDATE_STATE,
-//                "$state|$message"
-//            )
-//            if (state == "AUTH_FAILED" || state == "CONNECTRETRY") {
-//                auth_failed = true
-//            }
-//            if (!auth_failed) {
-//                try {
-//                    setStatus(state)
-//                    updateConnectionStatus(state)
-//                } catch (e: Exception) {
-//                    logger.log("openvpn status callback failed: " + e.message)
-//                    e.printStackTrace()
-//                }
-//                msg.sendToTarget()
-//            }
-//            if (auth_failed) {
-//                binding.logTv.setText("AUTHORIZATION FAILED!!")
-//                setStatus("CONNECTRETRY")
-//            }
-//            if (state == "CONNECTED") {
-//                auth_failed = false
-//                if (ActivityCompat.checkSelfPermission(
-//                        getContext(),
-//                        Manifest.permission.POST_NOTIFICATIONS
-//                    ) !== PackageManager.PERMISSION_GRANTED
-//                ) {
-//                    ActivityCompat.requestPermissions(
-//                        getActivity(),
-//                        arrayOf<String>(Manifest.permission.POST_NOTIFICATIONS),
-//                        MainFragment.NOTIFICATIONS_PERMISSION_REQUEST_CODE
-//                    )
-//                }
-//                bindTimerService()
-//            } else {
-//                unbindTimerService()
-//            }
+            val intent = Intent(activity, LaunchVPN::class.java)
+            intent.putExtra(LaunchVPN.EXTRA_KEY, profile.uuidString)
+            intent.putExtra(LaunchVPN.EXTRA_HIDELOG, true)
+            intent.putExtra(OpenVPNService.EXTRA_START_REASON, "my app")
+            intent.setAction(Intent.ACTION_MAIN)
+            activity.startActivity(intent)
         }
-    }
-
-    /**
-     * Prepare for vpn connect with required permission
-     */
-
-    fun prepareVpn() {
-        if (hasInternet()) runCatching {
-            // Checking permission for network monitor
-            val intent = mService!!.prepareVPNService()
-            if (intent != null) {
-                activity.startActivityForResult(intent, 1)
-            } else {
-                startVpn() //Already have permission
-            }
-
-            // Update connection status
-            status("connect")
-        }.onFailure { it.printStackTrace() }
-        else {
-            println("you have no internet connection !!")
-        }
-    }
-
-    private fun startVpn() {
-        runCatching {
-            val config = Serts.Japan
-            val profile = mService!!.addNewVPNProfile("Japan", false, config)
-            Log.i("rom","profile.mUUID=${profile.mUUID}")
-            mService!!.startProfile(profile.mUUID)
-            mService!!.startVPN(config)
-        }.onFailure {
-            it.printStackTrace()
-        }
-    }
-
-    private fun hasInternet(): Boolean {
-        return true // FIXME
     }
 
     fun onResume() {
-        bindService()
+        VpnStatus.addStateListener(stateListener)
     }
 
     fun onPause() {
-        activity.unbindService(mConnection)
+        VpnStatus.removeStateListener(stateListener)
     }
 
-    /**
-     * Stop vpn
-     * @return boolean: VPN status
-     */
-    fun stopVpn(): Boolean {
-        try {
-            mService?.disconnect()
-            status("connect")
-            vpnStart = false
-            return true
-        } catch (e: RemoteException) {
-//            logger.log("openvpn disconnect failed: " + e.message)
-            e.printStackTrace()
-        }
-        return false
+    fun stopVpn() {
+        val intent = Intent(activity, DisconnectVPN::class.java)
+        activity.startActivity(intent)
     }
 
-//    /**
-//     * Resume vpn
-//     * @return boolean: VPN status
-//     */
-//    fun resumeVpn() {
-//        try {
-//            mService!!.resume()
-//            status("connected")
-//            vpnStart = true
-//        } catch (e: RemoteException) {
-////            logger.log("openvpn connection resume failed: " + e.message)
-//            e.printStackTrace()
-//        }
-//    }
 
-    private fun status(value: String) {
-        Log.i("rom", "Status: $value")
+    private fun createVpnProfile(name: String, ovpnConfig: String): VpnProfile {
+        val profile = parseConfig(ovpnConfig.byteInputStream())
+        profile.mName = name
+        profile.mCompatMode = 20300
+        profile.mUseLegacyProvider = true
+        saveProfile(profile)
+        return profile
     }
 
-    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == ICS_OPENVPN_PERMISSION) {
-            try {
-                mService!!.registerStatusCallback(mCallback)
-            } catch (e: RemoteException) {
-//                logger.log("openvpn status callback failed: " + e.message)
-                e.printStackTrace()
+    private fun saveProfile(profile: VpnProfile) {
+        val vpl = ProfileManager.getInstance(activity.applicationContext)
+
+        vpl.addProfile(profile)
+        ProfileManager.saveProfile(activity.applicationContext, profile)
+        vpl.saveProfileList(activity.applicationContext)
+    }
+
+    private fun parseConfig(inputStream: InputStream): VpnProfile {
+        return inputStream.reader().use {
+            ConfigParser().run {
+                parseConfig(it)
+                convertProfile()
             }
         }
     }
-
-    private fun bindService() {
-        val icsopenvpnService = Intent(IOpenVPNAPIService::class.java.name)
-        icsopenvpnService.setPackage(activity.packageName)
-        activity.bindService(icsopenvpnService, mConnection, Context.BIND_AUTO_CREATE)
-    }
-
 }
-
-private const val ICS_OPENVPN_PERMISSION = 7

@@ -25,6 +25,7 @@
     <!--    </queries>-->
 
 
+    <!--        android:name=".core.ICSOpenVPNApplication"-->
     <application
         android:name=".core.ICSOpenVPNApplication"
         android:allowBackup="true"

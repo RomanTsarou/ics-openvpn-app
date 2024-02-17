@@ -5,8 +5,11 @@
 
 package com.openvpn
 
-import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -18,10 +21,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import com.openvpn.ui.theme.IcsopenvpnTheme
+import de.blinkt.openvpn.core.VpnNotificationUtils
 
 
 class MainActivity : ComponentActivity() {
@@ -29,7 +36,17 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.i("rom","onCreate $this, $savedInstanceState")
+        VpnNotificationUtils.createNotificationChannels(application)
         vpnConnectionWatcher = VpnConnectionWatcher(this)
+        if (Build.VERSION.SDK_INT >= 33
+            && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
+        }
 
         setContent {
             IcsopenvpnTheme {
@@ -38,7 +55,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainContent(onConnectClick = { vpnConnectionWatcher.prepareVpn() },
+                    val state by vpnConnectionWatcher.stateFlow.collectAsState()
+                    MainContent(
+                        state = state,
+                        onConnectClick = { vpnConnectionWatcher.startVpn() },
                         onDisconnectClick = { vpnConnectionWatcher.stopVpn() })
                 }
             }
@@ -54,11 +74,6 @@ class MainActivity : ComponentActivity() {
         super.onPause()
         vpnConnectionWatcher.onPause()
     }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        vpnConnectionWatcher.onActivityResult(requestCode, resultCode, data)
-    }
 }
 
 
@@ -66,6 +81,7 @@ class MainActivity : ComponentActivity() {
 fun MainContent(
     onConnectClick: () -> Unit = {},
     onDisconnectClick: () -> Unit = {},
+    state: String,
 ) {
     Column(
         modifier = Modifier
@@ -73,6 +89,10 @@ fun MainContent(
             .padding(24.dp),
         verticalArrangement = Arrangement.Center
     ) {
+        Text(
+            text = "State: $state", style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(vertical = 48.dp)
+        )
         Button(onClick = onConnectClick) {
             Text(text = "Connect")
         }
@@ -86,6 +106,6 @@ fun MainContent(
 @Composable
 fun Preview() {
     IcsopenvpnTheme {
-        MainContent()
+        MainContent(state = "CONNECTED")
     }
 }

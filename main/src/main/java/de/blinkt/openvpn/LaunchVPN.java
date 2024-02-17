@@ -274,6 +274,7 @@ public class LaunchVPN extends Activity {
     }
 
     void showLogWindow() {
+        if (BuildConfig.FLAVOR_implementation == "skeleton") return;
 
         Intent startLW = new Intent();
         startLW.setComponent(new ComponentName(this, getPackageName() + ".activities.LogWindow"));

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright (c) 2012-2024 Arne Schwabe
   ~ Distributed under the GNU GPL v2 with additional terms. For full terms see the file doc/LICENSE.txt
   -->
@@ -7,4 +6,6 @@
 <resources>
 
     <style name="Theme.Icsopenvpn" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="blinkt.dialog" parent="android:Theme.DeviceDefault.Dialog"/>
 </resources>

@@ -1,5 +1,3 @@
-import com.android.build.gradle.api.ApplicationVariant
-
 /*
  * Copyright (c) 2012-2016 Arne Schwabe
  * Distributed under the GNU GPL v2 with additional terms. For full terms see the file doc/LICENSE.txt
@@ -8,6 +6,7 @@ import com.android.build.gradle.api.ApplicationVariant
 plugins {
 //    alias(libs.plugins.android.application)
     id("com.android.library")
+    id("maven-publish")
     alias(libs.plugins.kotlin.android)
 //    id("checkstyle")
 }
@@ -97,7 +96,14 @@ android {
     }
 
     lint {
-        enable += setOf("BackButton", "EasterEgg", "StopShip", "IconExpectedSize", "GradleDynamicVersion", "NewerVersionAvailable")
+        enable += setOf(
+            "BackButton",
+            "EasterEgg",
+            "StopShip",
+            "IconExpectedSize",
+            "GradleDynamicVersion",
+            "NewerVersionAvailable"
+        )
         checkOnly += setOf("ImpliedQuantity", "MissingQuantity")
         disable += setOf("MissingTranslation", "UnsafeNativeCodeLocation")
     }
@@ -147,6 +153,13 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    publishing {
+        singleVariant("skeletonOvpn2Release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
     }
 
 //    splits {
@@ -209,13 +222,28 @@ fun registerGenTask(variantName: String, variantDirName: String): File {
         doFirst {
             mkdir(genDir)
         }
-        commandLine(listOf(swigcmd, "-outdir", genDir, "-outcurrentdir", "-c++", "-java", "-package", "net.openvpn.ovpn3",
-                "-Isrc/main/cpp/openvpn3/client", "-Isrc/main/cpp/openvpn3/",
+        commandLine(
+            listOf(
+                swigcmd,
+                "-outdir",
+                genDir,
+                "-outcurrentdir",
+                "-c++",
+                "-java",
+                "-package",
+                "net.openvpn.ovpn3",
+                "-Isrc/main/cpp/openvpn3/client",
+                "-Isrc/main/cpp/openvpn3/",
                 "-DOPENVPN_PLATFORM_ANDROID",
-                "-o", "${genDir}/ovpncli_wrap.cxx", "-oh", "${genDir}/ovpncli_wrap.h",
-                "src/main/cpp/openvpn3/client/ovpncli.i"))
-        inputs.files( "src/main/cpp/openvpn3/client/ovpncli.i")
-        outputs.dir( genDir)
+                "-o",
+                "${genDir}/ovpncli_wrap.cxx",
+                "-oh",
+                "${genDir}/ovpncli_wrap.h",
+                "src/main/cpp/openvpn3/client/ovpncli.i"
+            )
+        )
+        inputs.files("src/main/cpp/openvpn3/client/ovpncli.i")
+        outputs.dir(genDir)
 
     }
     return baseDir
@@ -257,6 +285,20 @@ dependencies {
     testImplementation(libs.kotlin)
     testImplementation(libs.mockito.core)
     testImplementation(libs.robolectric)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "com.github.RomanTsarou"
+            artifactId = "android-openvpn"
+            version = "0.0.1-SNAPSHOT"
+
+            afterEvaluate {
+                from(components.getByName("skeletonOvpn2Release"))
+            }
+        }
+    }
 }
 
 fun DependencyHandler.uiImplementation(dependencyNotation: Any): Dependency? =

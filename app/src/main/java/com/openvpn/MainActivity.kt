@@ -9,12 +9,13 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -23,12 +24,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import com.openvpn.ui.theme.IcsopenvpnTheme
-import de.blinkt.openvpn.core.VpnNotificationUtils
 
 
 class MainActivity : ComponentActivity() {
@@ -36,9 +37,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.i("rom","onCreate $this, $savedInstanceState")
-        VpnNotificationUtils.createNotificationChannels(application)
-        vpnConnectionWatcher = VpnConnectionWatcher(this)
+        vpnConnectionWatcher = (application as App).vpnConnectionWatcher
+
         if (Build.VERSION.SDK_INT >= 33
             && ActivityCompat.checkSelfPermission(
                 this,
@@ -58,8 +58,8 @@ class MainActivity : ComponentActivity() {
                     val state by vpnConnectionWatcher.stateFlow.collectAsState()
                     MainContent(
                         state = state,
-                        onConnectClick = { vpnConnectionWatcher.startVpn() },
-                        onDisconnectClick = { vpnConnectionWatcher.stopVpn() })
+                        onConnectClick = { vpnConnectionWatcher.startVpn(this) },
+                        onDisconnectClick = { vpnConnectionWatcher.stopVpn(this) })
                 }
             }
         }
@@ -87,16 +87,29 @@ fun MainContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
     ) {
         Text(
-            text = "State: $state", style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(vertical = 48.dp)
+            text = "VPN state:\n$state", style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(vertical = 48.dp),
+            minLines = 4,
         )
-        Button(onClick = onConnectClick) {
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp),
+            onClick = onConnectClick,
+            enabled = state == "NOTCONNECTED",
+        ) {
             Text(text = "Connect")
         }
-        Button(onClick = onDisconnectClick) {
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp),
+            onClick = onDisconnectClick,
+            enabled = state != "NOTCONNECTED",
+        ) {
             Text(text = "Disconnect")
         }
     }

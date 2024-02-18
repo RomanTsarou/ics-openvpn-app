@@ -26,11 +26,10 @@
 
 
     <!--        android:name=".core.ICSOpenVPNApplication"-->
+
+    <!-- TODO   You need add it to your app manifest: android:extractNativeLibs="true"-->
     <application
-        android:name=".core.ICSOpenVPNApplication"
-        android:allowBackup="true"
         android:appCategory="productivity"
-        android:supportsRtl="true"
         tools:ignore="UnusedAttribute">
         <meta-data
             android:name="android.content.APP_RESTRICTIONS"
@@ -59,36 +58,36 @@
                 android:value="vpn" />
 
         </service>
-        <service
-            android:name=".api.ExternalOpenVPNService"
-            android:exported="true"
-            android:process=":openvpn"
-            tools:ignore="ExportedService">
-            <intent-filter>
-                <action android:name="de.blinkt.openvpn.api.IOpenVPNAPIService" />
-            </intent-filter>
-        </service>
+<!--        <service-->
+<!--            android:name=".api.ExternalOpenVPNService"-->
+<!--            android:exported="true"-->
+<!--            android:process=":openvpn"-->
+<!--            tools:ignore="ExportedService">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="de.blinkt.openvpn.api.IOpenVPNAPIService" />-->
+<!--            </intent-filter>-->
+<!--        </service>-->
         <service
             android:name=".core.OpenVPNStatusService"
             android:exported="false"
             android:process=":openvpn" />
 
-        <activity
-            android:name=".api.GrantPermissionsActivity"
-            android:exported="true"
-            android:theme="@style/blinkt">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".api.ConfirmDialog"
-            android:exported="true"
-            android:theme="@style/blinkt">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-            </intent-filter>
-        </activity>
+<!--        <activity-->
+<!--            android:name=".api.GrantPermissionsActivity"-->
+<!--            android:exported="true"-->
+<!--            android:theme="@style/blinkt">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
+<!--        <activity-->
+<!--            android:name=".api.ConfirmDialog"-->
+<!--            android:exported="true"-->
+<!--            android:theme="@style/blinkt">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
 
         <receiver
             android:name=".OnBootReceiver"

@@ -123,7 +123,7 @@ public class StatusListener implements VpnStatus.LogListener {
     private Context mContext;
     private String pkgName = "(packageName not yet set)";
 
-    void init(Context c) {
+    public void init(Context c) {
         pkgName = c.getPackageName();
         Intent intent = new Intent(c, OpenVPNStatusService.class);
         intent.setAction(OpenVPNService.START_SERVICE);

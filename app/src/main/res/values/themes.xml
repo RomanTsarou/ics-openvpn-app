@@ -7,5 +7,5 @@
 
     <style name="Theme.Icsopenvpn" parent="android:Theme.Material.Light.NoActionBar" />
 
-    <style name="blinkt.dialog" parent="android:Theme.DeviceDefault.Dialog"/>
+<!--    <style name="blinkt.dialog" parent="android:Theme.DeviceDefault.Dialog"/>-->
 </resources>

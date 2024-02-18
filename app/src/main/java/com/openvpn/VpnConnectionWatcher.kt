@@ -6,6 +6,7 @@
 package com.openvpn
 
 import android.app.Activity
+import android.app.Application
 import android.content.Intent
 import android.util.Log
 import de.blinkt.openvpn.LaunchVPN
@@ -15,13 +16,16 @@ import de.blinkt.openvpn.core.ConfigParser
 import de.blinkt.openvpn.core.ConnectionStatus
 import de.blinkt.openvpn.core.OpenVPNService
 import de.blinkt.openvpn.core.ProfileManager
+import de.blinkt.openvpn.core.StatusListener
+import de.blinkt.openvpn.core.VpnNotificationUtils
 import de.blinkt.openvpn.core.VpnStatus
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.io.InputStream
 
-class VpnConnectionWatcher(private val activity: Activity) {
+class VpnConnectionWatcher(private val context: Application) {
+    private val statusListener = StatusListener()
     val stateFlow = MutableStateFlow("")
 
     /**
@@ -48,8 +52,13 @@ class VpnConnectionWatcher(private val activity: Activity) {
 //                UNKNOWN_LEVEL -> TODO()
 //            }
             Log.i("rom", "updateState: ${listOf(level, state, logmessage, localizedResId)}")
-            Log.v("rom", "updateState localized: ${activity.getString(localizedResId)}")
+            Log.v("rom", "updateState localized: ${context.getString(localizedResId)}")
             stateFlow.value = level.name.substringAfter("LEVEL_")
+        }
+
+        init {
+            VpnNotificationUtils.createNotificationChannels(context)
+            statusListener.init(context)
         }
 
         override fun setConnectedVPN(uuid: String?) {
@@ -58,13 +67,13 @@ class VpnConnectionWatcher(private val activity: Activity) {
 
     }
 
-    fun startVpn() {
+    fun startVpn(activity: Activity) {
         GlobalScope.launch {
-            val profile = ProfileManager.getInstance(activity.applicationContext)
-                .getProfileByName("Japan3")
-                ?: createVpnProfile("Japan3", Serts.Japan3)
+            val profile = ProfileManager.getInstance(context)
+                .getProfileByName("Japan102")
+                ?: createVpnProfile("Japan102", Serts.Japan102)
 
-            val intent = Intent(activity, LaunchVPN::class.java)
+            val intent = Intent(context, LaunchVPN::class.java)
             intent.putExtra(LaunchVPN.EXTRA_KEY, profile.uuidString)
             intent.putExtra(LaunchVPN.EXTRA_HIDELOG, true)
             intent.putExtra(OpenVPNService.EXTRA_START_REASON, "my app")
@@ -81,8 +90,9 @@ class VpnConnectionWatcher(private val activity: Activity) {
         VpnStatus.removeStateListener(stateListener)
     }
 
-    fun stopVpn() {
-        val intent = Intent(activity, DisconnectVPN::class.java)
+    fun stopVpn(activity: Activity) {
+        val intent = Intent(context, DisconnectVPN::class.java)
+//        intent.putExtra(DisconnectVPN.EXTRA_WITHOUT_CONFIRMATION,true)
         activity.startActivity(intent)
     }
 
@@ -97,11 +107,11 @@ class VpnConnectionWatcher(private val activity: Activity) {
     }
 
     private fun saveProfile(profile: VpnProfile) {
-        val vpl = ProfileManager.getInstance(activity.applicationContext)
+        val vpl = ProfileManager.getInstance(context)
 
         vpl.addProfile(profile)
-        ProfileManager.saveProfile(activity.applicationContext, profile)
-        vpl.saveProfileList(activity.applicationContext)
+        ProfileManager.saveProfile(context, profile)
+        vpl.saveProfileList(context)
     }
 
     private fun parseConfig(inputStream: InputStream): VpnProfile {

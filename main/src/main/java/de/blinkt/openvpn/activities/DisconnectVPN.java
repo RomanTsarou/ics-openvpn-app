@@ -12,8 +12,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+
+import androidx.annotation.Nullable;
 
 import de.blinkt.openvpn.LaunchVPN;
 import de.blinkt.openvpn.R;
@@ -26,9 +29,10 @@ import de.blinkt.openvpn.core.VpnStatus;
  * Created by arne on 13.10.13.
  */
 public class DisconnectVPN extends Activity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
+    public static final String EXTRA_WITHOUT_CONFIRMATION = "WITHOUT_CONFIRMATION";
     private IOpenVPNServiceInternal mService;
+    private boolean withoutConfirmation = false;
     private final ServiceConnection mConnection = new ServiceConnection() {
-
 
 
         @Override
@@ -36,6 +40,10 @@ public class DisconnectVPN extends Activity implements DialogInterface.OnClickLi
                                        IBinder service) {
 
             mService = IOpenVPNServiceInternal.Stub.asInterface(service);
+            if (withoutConfirmation) {
+                stopVPN();
+                finish();
+            }
         }
 
         @Override
@@ -46,12 +54,20 @@ public class DisconnectVPN extends Activity implements DialogInterface.OnClickLi
     };
 
     @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        withoutConfirmation = getIntent().getBooleanExtra(EXTRA_WITHOUT_CONFIRMATION, false);
+        if (!withoutConfirmation) {
+            showDisconnectDialog();
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         Intent intent = new Intent(this, OpenVPNService.class);
         intent.setAction(OpenVPNService.START_SERVICE);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-        showDisconnectDialog();
     }
 
     @Override
@@ -66,7 +82,7 @@ public class DisconnectVPN extends Activity implements DialogInterface.OnClickLi
         builder.setMessage(R.string.cancel_connection_query);
         builder.setNegativeButton(android.R.string.cancel, this);
         builder.setPositiveButton(R.string.cancel_connection, this);
-        builder.setNeutralButton(R.string.reconnect, this);
+//        builder.setNeutralButton(R.string.reconnect, this);
         builder.setOnCancelListener(this);
 
         builder.show();
@@ -75,14 +91,7 @@ public class DisconnectVPN extends Activity implements DialogInterface.OnClickLi
     @Override
     public void onClick(DialogInterface dialog, int which) {
         if (which == DialogInterface.BUTTON_POSITIVE) {
-            ProfileManager.setConntectedVpnProfileDisconnected(this);
-            if (mService != null) {
-                try {
-                    mService.stopVPN(false);
-                } catch (RemoteException e) {
-                    VpnStatus.logException(e);
-                }
-            }
+            stopVPN();
         } else if (which == DialogInterface.BUTTON_NEUTRAL) {
             Intent intent = new Intent(this, LaunchVPN.class);
             intent.putExtra(LaunchVPN.EXTRA_KEY, VpnStatus.getLastConnectedVPNProfile());
@@ -91,6 +100,17 @@ public class DisconnectVPN extends Activity implements DialogInterface.OnClickLi
             startActivity(intent);
         }
         finish();
+    }
+
+    private void stopVPN() {
+        ProfileManager.setConntectedVpnProfileDisconnected(this);
+        if (mService != null) {
+            try {
+                mService.stopVPN(false);
+            } catch (RemoteException e) {
+                VpnStatus.logException(e);
+            }
+        }
     }
 
     @Override

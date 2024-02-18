@@ -15,6 +15,7 @@
     <drawable name="ic_menu_delete_grey">@drawable/ic_baseline_delete_outline_24</drawable>
     <drawable name="ic_search">@drawable/ic_baseline_search_24</drawable>
     <drawable name="ic_stat_vpn">@drawable/shield_lock_outline</drawable>
+    <drawable name="ic_stat_vpn_off">@drawable/shield_off_outline</drawable>
     <drawable name="ic_quick">@drawable/ic_icon_system</drawable>
 
     <drawable name="ic_menu_edit">@drawable/ic_edit</drawable>

@@ -7,8 +7,21 @@
 
     <style name="blinkt.baseTheme" parent="android:Theme.DeviceDefault.Light" />
 
-    <style name="blinkt.dialog" parent="android:Theme.DeviceDefault.Light.Dialog" />
-
+    <style name="blinkt.dialog">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarDividerColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">false</item>
+        <!--        <item name="android:windowSoftInputMode">stateAlwaysHidden</item>-->
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
 
     <style name="Theme.CreateShortCut" parent="android:Theme.DeviceDefault.DialogWhenLarge" />
 

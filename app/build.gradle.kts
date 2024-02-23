@@ -59,7 +59,7 @@ android {
 }
 
 dependencies {
-    implementation(files("../main/build/outputs/aar/main-skeleton-ovpn2-release.aar"))
+    implementation(files("libs/main-skeleton-ovpn2-release.aar"))
     implementation(libs.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.activity.compose)

@@ -1,0 +1,3 @@
+before_install:
+  - echo "Running a custom installswig.sh"
+  - ./installswig.sh
